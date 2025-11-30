@@ -3,6 +3,8 @@ export interface Product {
     title: string
     description?: string
     price: number
+    original_price: number | null
+    source: string
     image_url: string
     affiliate_url: string
     category: string
@@ -32,13 +34,14 @@ export interface PaginatedResponse<T> {
     pagination: Pagination
 }
 
-const BASE_URL = "https://api.compreitodos.com/public"
+const BASE_URL = "http://localhost:8000/public"
 
 export async function fetchProducts(
     page = 1,
     limit = 20,
     category?: string,
-    search?: string
+    search?: string,
+    sort?: string
 ): Promise<ApiResponse<PaginatedResponse<Product>>> {
     const params = new URLSearchParams({
         page: page.toString(),
@@ -47,6 +50,7 @@ export async function fetchProducts(
 
     if (category) params.append("category", category)
     if (search) params.append("search", search)
+    if (sort) params.append("sort", sort)
 
     const response = await fetch(`${BASE_URL}/products?${params.toString()}`)
     if (!response.ok) {

@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Heart, MessageCircle, Share2, ExternalLink, Flame, Clock, Loader2 } from "lucide-react"
-import { useRouter } from "next/navigation"
+import { useRouter, useParams } from "next/navigation"
 import { fetchProductById, type Product } from "@/lib/api"
 import type { Deal } from "@/lib/mock-data"
 
@@ -32,7 +32,7 @@ const mockComments = [
           avatar: "/placeholder.svg",
           level: 4,
         },
-        content: "Encontrei outro mais barato: https://pechinchou.com.br/meli+",
+        content: "Encontrei outro mais barato: https://compreitodos.com",
         likes: 3,
         isLiked: false,
         createdAt: "há 3min",
@@ -42,33 +42,61 @@ const mockComments = [
 ]
 
 // Helper to convert API Product to Deal interface
-const mapProductToDeal = (product: Product): Deal => ({
-  id: product.id.toString(),
-  title: product.title,
-  description: product.description || "",
-  originalPrice: product.price * 1.2, // Mocking original price
-  currentPrice: product.price,
-  discount: 20, // Mocking discount
-  store: "Compreitodos",
-  storeIcon: "🛍️",
-  image: product.image_url,
-  category: product.category,
-  likes: 0,
-  comments: 0,
-  views: 0,
-  isHot: false,
-  isFree: product.price === 0,
-  isExpiring: false,
-  postedBy: {
-    name: "Admin",
-    avatar: "/placeholder.svg",
-    level: 1,
-  },
-  postedAt: new Date(product.created_at).toLocaleDateString(),
-  link: product.affiliate_url,
-})
+// Helper to convert API Product to Deal interface
+const mapProductToDeal = (product: Product): Deal => {
+  const hasDiscount = product.original_price && product.original_price > product.price
+  const discount = hasDiscount
+    ? Math.round(((product.original_price! - product.price) / product.original_price!) * 100)
+    : 0
 
-export default function DealPage({ params }: { params: { id: string } }) {
+  const getStoreInfo = (source: string) => {
+    const lowerSource = source.toLowerCase()
+    if (lowerSource.includes("mercadolivre") || lowerSource.includes("mercado livre")) {
+      return { name: "Mercado Livre", icon: "🤝" }
+    }
+    if (lowerSource.includes("amazon")) {
+      return { name: "Amazon", icon: "📦" }
+    }
+    if (lowerSource.includes("shopee")) {
+      return { name: "Shopee", icon: "🛍️" }
+    }
+    if (lowerSource.includes("magalu") || lowerSource.includes("magazine")) {
+      return { name: "Magalu", icon: "🏬" }
+    }
+    return { name: source, icon: "🛍️" }
+  }
+
+  const storeInfo = getStoreInfo(product.source)
+
+  return {
+    id: product.id.toString(),
+    title: product.title,
+    description: product.description || "",
+    originalPrice: hasDiscount ? product.original_price! : 0,
+    currentPrice: product.price,
+    discount: discount,
+    store: storeInfo.name,
+    storeIcon: storeInfo.icon,
+    image: product.image_url,
+    category: product.category,
+    likes: 0,
+    comments: 0,
+    views: 0,
+    isHot: discount > 40,
+    isFree: product.price === 0,
+    isExpiring: false,
+    postedBy: {
+      name: "Admin",
+      avatar: "/placeholder.svg",
+      level: 1,
+    },
+    postedAt: new Date(product.created_at).toLocaleDateString(),
+    link: product.affiliate_url,
+  }
+}
+
+export default function DealPage() {
+  const params = useParams()
   const router = useRouter()
   const [showComments, setShowComments] = useState(true)
   const [isLiked, setIsLiked] = useState(false)
@@ -78,9 +106,11 @@ export default function DealPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     async function loadDeal() {
+      if (!params.id) return
       try {
         setLoading(true)
-        const response = await fetchProductById(parseInt(params.id))
+        const id = Array.isArray(params.id) ? params.id[0] : params.id
+        const response = await fetchProductById(parseInt(id))
         setDeal(mapProductToDeal(response.data))
       } catch (error) {
         console.error("Failed to fetch deal:", error)

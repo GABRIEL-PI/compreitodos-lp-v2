@@ -3,19 +3,18 @@
 import { EnhancedDealCard } from "./enhanced-deal-card"
 import { AdvancedFilters } from "./advanced-filters"
 import { Button } from "@/components/ui/button"
-import { Flame, Clock, Star, TrendingUp, Grid3X3, List, Loader2 } from "lucide-react"
-import { useState, useEffect, useCallback } from "react"
-import { useRouter } from "next/navigation"
+import { Flame, Clock, Star, TrendingUp, Grid3X3, List, Loader2, Search, RefreshCw } from "lucide-react"
+import { useState, useEffect, useCallback, useRef } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { fetchProducts, type Product } from "@/lib/api"
+import { Input } from "@/components/ui/input"
+import { useInView } from "react-intersection-observer"
 import type { Deal } from "@/lib/mock-data"
 
 const quickFilters = [
-  { id: "alerts", label: "Meus Alertas", icon: null, badge: "Novo" },
   { id: "hot", label: "Destaques", icon: Star },
   { id: "recent", label: "Recentes", icon: Clock },
-  { id: "lowest", label: "Menor Preço", icon: TrendingUp },
-  { id: "popular", label: "Mais Pontuados", icon: Flame },
-  { id: "deals", label: "Ofertas", icon: null },
+  { id: "price_asc", label: "Menor Preço", icon: TrendingUp },
 ]
 
 interface FilterState {
@@ -28,31 +27,58 @@ interface FilterState {
 }
 
 // Helper to convert API Product to Deal interface expected by components
-const mapProductToDeal = (product: Product): Deal => ({
-  id: product.id.toString(),
-  title: product.title,
-  description: product.description || "",
-  originalPrice: product.price * 1.2, // Mocking original price as API doesn't provide it yet
-  currentPrice: product.price,
-  discount: 20, // Mocking discount
-  store: "Compreitodos",
-  storeIcon: "🛍️",
-  image: product.image_url,
-  category: product.category,
-  likes: 0,
-  comments: 0,
-  views: 0,
-  isHot: false,
-  isFree: product.price === 0,
-  isExpiring: false,
-  postedBy: {
-    name: "Admin",
-    avatar: "/placeholder.svg",
-    level: 1,
-  },
-  postedAt: new Date(product.created_at).toLocaleDateString(),
-  link: product.affiliate_url,
-})
+// Helper to convert API Product to Deal interface expected by components
+const mapProductToDeal = (product: Product): Deal => {
+  const hasDiscount = product.original_price && product.original_price > product.price
+  const discount = hasDiscount
+    ? Math.round(((product.original_price! - product.price) / product.original_price!) * 100)
+    : 0
+
+  const getStoreInfo = (source: string) => {
+    const lowerSource = source.toLowerCase()
+    if (lowerSource.includes("mercadolivre") || lowerSource.includes("mercado livre")) {
+      return { name: "Mercado Livre", icon: "🤝" } // Using a handshake or generic icon as placeholder, or specific if available
+    }
+    if (lowerSource.includes("amazon")) {
+      return { name: "Amazon", icon: "📦" }
+    }
+    if (lowerSource.includes("shopee")) {
+      return { name: "Shopee", icon: "🛍️" }
+    }
+    if (lowerSource.includes("magalu") || lowerSource.includes("magazine")) {
+      return { name: "Magalu", icon: "🏬" }
+    }
+    return { name: source, icon: "🛍️" }
+  }
+
+  const storeInfo = getStoreInfo(product.source)
+
+  return {
+    id: product.id.toString(),
+    title: product.title,
+    description: product.description || "",
+    originalPrice: hasDiscount ? product.original_price! : 0,
+    currentPrice: product.price,
+    discount: discount,
+    store: storeInfo.name,
+    storeIcon: storeInfo.icon,
+    image: product.image_url,
+    category: product.category,
+    likes: 0,
+    comments: 0,
+    views: 0,
+    isHot: discount > 40,
+    isFree: product.price === 0,
+    isExpiring: false,
+    postedBy: {
+      name: "Admin",
+      avatar: "/placeholder.svg",
+      level: 1,
+    },
+    postedAt: new Date(product.created_at).toLocaleDateString(),
+    link: product.affiliate_url,
+  }
+}
 
 interface DealFeedProps {
   initialCategory?: string
@@ -73,29 +99,71 @@ export function DealFeed({ initialCategory }: DealFeedProps) {
     features: [],
     sortBy: "relevance",
   })
+  const searchParams = useSearchParams()
+  const searchTerm = searchParams.get("search") || ""
+  const [hasNewDeals, setHasNewDeals] = useState(false)
+  const { ref, inView } = useInView()
   const router = useRouter()
+
+  // Debounce search term
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setPage(1)
+      loadDeals(1, true)
+    }, 500)
+    return () => clearTimeout(timer)
+  }, [searchTerm])
+
+  // New products timer
+  useEffect(() => {
+    const timer = setInterval(() => {
+      // In a real app, we would check the API here
+      // For now, just show the notification occasionally
+      if (Math.random() > 0.7) {
+        setHasNewDeals(true)
+      }
+    }, 180000) // 3 minutes
+
+    return () => clearInterval(timer)
+  }, [])
+
+  // Infinite scroll
+  useEffect(() => {
+    if (inView && hasMore && !loading) {
+      handleLoadMore()
+    }
+  }, [inView, hasMore, loading])
 
   const loadDeals = useCallback(async (pageNum: number, isNewFilter = false) => {
     try {
       setLoading(true)
       // Use the first category from filters if available
       const categoryFilter = filters.categories.length > 0 ? filters.categories[0] : undefined
-      const response = await fetchProducts(pageNum, 12, categoryFilter, undefined)
+      const response = await fetchProducts(pageNum, 12, categoryFilter, searchTerm, activeQuickFilter)
 
       const newDeals = response.data.data.map(mapProductToDeal)
 
-      setDeals(prev => isNewFilter ? newDeals : [...prev, ...newDeals])
+      setDeals(prev => {
+        const currentDeals = isNewFilter ? [] : prev
+        // Deduplication logic
+        const existingIds = new Set(currentDeals.map(d => d.id))
+        const uniqueNewDeals = newDeals.filter(d => !existingIds.has(d.id))
+        return [...currentDeals, ...uniqueNewDeals]
+      })
       setHasMore(newDeals.length === 12) // Assuming limit is 12
     } catch (error) {
       console.error("Failed to fetch deals:", error)
     } finally {
       setLoading(false)
     }
-  }, [filters.categories]) // Add dependency on filters.categories
+  }, [filters.categories, searchTerm, activeQuickFilter]) // Add dependency on filters.categories, searchTerm and activeQuickFilter
 
-  useEffect(() => {
+  const handleRefresh = () => {
+    setHasNewDeals(false)
+    setPage(1)
     loadDeals(1, true)
-  }, [loadDeals, activeQuickFilter, filters]) // Reload when filters change
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const handleLoadMore = () => {
     const nextPage = page + 1
@@ -116,7 +184,17 @@ export function DealFeed({ initialCategory }: DealFeedProps) {
     <div className="space-y-4">
       <div className="bg-white rounded-lg p-3 shadow-sm border border-gray-200">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2">
+          <div className="flex items-center space-x-2 overflow-x-auto pb-2 flex-1">
+            {/* Search Input - Removed as it's now in Header */}
+            {/* <div className="relative min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input 
+                placeholder="Buscar promoções..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9 h-9 text-sm"
+              />
+            </div> */}
             {quickFilters.map((option) => (
               <Button
                 key={option.id}
@@ -130,17 +208,17 @@ export function DealFeed({ initialCategory }: DealFeedProps) {
               >
                 {option.icon && <option.icon className="h-3 w-3 mr-1" />}
                 {option.label}
-                {option.badge && (
+                {/* {option.badge && (
                   <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] px-1 rounded">
                     {option.badge}
                   </span>
-                )}
+                )} */}
               </Button>
             ))}
           </div>
 
           <div className="flex items-center space-x-2">
-            <AdvancedFilters onFiltersChange={handleFiltersChange} dealCount={deals.length} />
+            {/* <AdvancedFilters onFiltersChange={handleFiltersChange} dealCount={deals.length} />
 
             <Button variant="ghost" size="icon" className="text-gray-700 hover:bg-gray-100">
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -170,7 +248,7 @@ export function DealFeed({ initialCategory }: DealFeedProps) {
               >
                 <List className="h-3 w-3" />
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
@@ -183,69 +261,29 @@ export function DealFeed({ initialCategory }: DealFeedProps) {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {deals.map((deal, index) => (
             <div key={deal.id} onClick={() => handleDealClick(deal.id)}>
-              {index === 0 && page === 1 ? (
-                <div className="relative rounded-lg overflow-hidden cursor-pointer group h-full bg-gradient-to-b from-red-900 to-black">
-                  <div className="absolute inset-0">
-                    <div className="absolute top-4 left-4 right-4 space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="bg-red-600 text-white text-xs font-bold px-2 py-1 rounded">OPERAÇÃO</span>
-                        <span className="text-white text-xs">SECRETO</span>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="text-sm text-gray-300">ARQUIVO</div>
-                        <div className="text-sm text-gray-300">DESCLASSIFICADO</div>
-                      </div>
-                    </div>
-
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                      <h3 className="text-4xl font-bold text-white mb-2">
-                        BLACK FRI<span className="text-red-600">D</span>AY
-                      </h3>
-                      <div className="flex items-center justify-center gap-4 text-white mt-6">
-                        <div className="text-center">
-                          <div className="bg-red-600 rounded-lg px-4 py-2 mb-1">
-                            <span className="text-2xl font-bold">4d</span>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="bg-red-600 rounded-lg px-4 py-2 mb-1">
-                            <span className="text-2xl font-bold">11h</span>
-                          </div>
-                        </div>
-                        <div className="text-center">
-                          <div className="bg-red-600 rounded-lg px-4 py-2 mb-1">
-                            <span className="text-2xl font-bold">38m</span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between">
-                      <div>
-                        <div className="text-xs text-gray-400">ARQUIVO</div>
-                        <div className="text-xs text-gray-400">SECRETO</div>
-                      </div>
-                      <div className="text-xs text-gray-400">DIA 28</div>
-                    </div>
-                  </div>
-                  <div className="aspect-[3/4]"></div>
-                </div>
-              ) : (
-                <EnhancedDealCard deal={deal} onCommentClick={() => handleDealClick(deal.id)} />
-              )}
+              <EnhancedDealCard deal={deal} onCommentClick={() => handleDealClick(deal.id)} />
             </div>
           ))}
         </div>
       )}
 
-      {/* Load More */}
-      {hasMore && !loading && deals.length > 0 && (
-        <div className="text-center pt-6">
-          <Button variant="outline" size="lg" onClick={handleLoadMore}>
-            Carregar mais promoções
+      {/* New Deals Notification */}
+      {hasNewDeals && (
+        <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-40">
+          <Button
+            onClick={handleRefresh}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg rounded-full px-6 animate-bounce"
+          >
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Novos produtos disponíveis
           </Button>
         </div>
       )}
+
+      {/* Infinite Scroll Sentinel */}
+      <div ref={ref} className="h-10 w-full flex justify-center items-center">
+        {loading && hasMore && <Loader2 className="h-6 w-6 animate-spin text-[var(--primary)]" />}
+      </div>
 
       {loading && deals.length > 0 && (
         <div className="flex justify-center pt-6">

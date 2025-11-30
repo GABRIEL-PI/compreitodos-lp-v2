@@ -5,15 +5,35 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState } from "react"
-import { useAuth } from "@/lib/auth-context"
-import { AuthModal } from "./auth-modal"
+
+// import { useAuth } from "@/lib/auth-context"
+// import { AuthModal } from "./auth-modal"
 import { CategoryMegaMenu } from "./category-mega-menu"
 import Link from "next/link"
+import { useRouter, useSearchParams } from "next/navigation"
 
 export function Header() {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
-  const { user } = useAuth()
+  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "")
+
+  const handleSearch = () => {
+    if (searchQuery.trim()) {
+      router.push(`/?search=${encodeURIComponent(searchQuery)}`)
+    } else {
+      router.push("/")
+    }
+  }
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      handleSearch()
+    }
+  }
+  // const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
+  // const { user } = useAuth()
+
 
   return (
     <>
@@ -28,7 +48,7 @@ export function Header() {
               <span className="text-xl font-bold">
                 Comprei<span className="font-normal">todos</span>
               </span>
-              <span className="bg-white text-black text-xs font-bold px-2 py-0.5 rounded">BLK25</span>
+              {/* <span className="bg-white text-black text-xs font-bold px-2 py-0.5 rounded">BLK25</span> */}
             </Link>
 
             {/* Navigation - Desktop */}
@@ -45,7 +65,7 @@ export function Header() {
                 </Button>
               </Link>
               <CategoryMegaMenu />
-              <Link href="/explorar">
+              {/* <Link href="/explorar">
                 <Button variant="ghost" className="text-white/70 hover:bg-white/10 hover:text-white gap-2">
                   <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <circle cx="11" cy="11" r="8"></circle>
@@ -61,7 +81,8 @@ export function Header() {
                   </svg>
                   Recebidos
                 </Button>
-              </Link>
+              </Link> */}
+
             </nav>
 
             {/* Search Bar */}
@@ -71,11 +92,15 @@ export function Header() {
                 <Input
                   placeholder="Busque por lojas e promoções"
                   className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-white/30"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleKeyDown}
                 />
                 <Button
                   size="icon"
                   variant="ghost"
                   className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
+                  onClick={handleSearch}
                 >
                   <Search className="h-4 w-4 text-white" />
                 </Button>
@@ -85,7 +110,7 @@ export function Header() {
             {/* Right Side Actions */}
             <div className="flex items-center gap-2">
               {/* Social Login Buttons */}
-              <Button
+              {/* <Button
                 variant="ghost"
                 size="icon"
                 className="hidden md:flex text-white hover:bg-white/10 rounded-full h-9 w-9"
@@ -135,10 +160,10 @@ export function Header() {
                     fill="currentColor"
                   />
                 </svg>
-              </Button>
+              </Button> */}
 
               {/* Login Button */}
-              {user ? (
+              {/* {user ? (
                 <Button variant="ghost" className="relative h-8 w-8 rounded-full p-0">
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
@@ -157,7 +182,8 @@ export function Header() {
                     <line x1="15" y1="12" x2="3" y2="12"></line>
                   </svg>
                 </Button>
-              )}
+              )} */}
+
 
               {/* Mobile Menu */}
               <Button
@@ -185,7 +211,7 @@ export function Header() {
                     Categorias
                   </Button>
                 </Link>
-                <Link href="/explorar">
+                {/* <Link href="/explorar">
                   <Button variant="ghost" className="w-full justify-start text-white/70 hover:bg-white/10">
                     Explorar
                   </Button>
@@ -194,14 +220,17 @@ export function Header() {
                   <Button variant="ghost" className="w-full justify-start text-white/70 hover:bg-white/10">
                     Recebidos
                   </Button>
-                </Link>
+                </Link> */}
+
               </nav>
             </div>
           )}
         </div>
       </header>
 
-      <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} />
+      {/* <AuthModal isOpen={isAuthModalOpen} onClose={() => setIsAuthModalOpen(false)} /> */}
+
+
     </>
   )
 }

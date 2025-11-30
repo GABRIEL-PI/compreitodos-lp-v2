@@ -20,8 +20,7 @@ import {
   Gift,
   ChevronRight,
 } from "lucide-react"
-
-interface Category {
+export interface Category {
   id: string
   name: string
   icon: any
@@ -31,119 +30,15 @@ interface Category {
   description?: string
 }
 
-const categories: Category[] = [
-  {
-    id: "eletronicos",
-    name: "Eletrônicos",
-    icon: Zap,
-    count: 189,
-    description: "Smartphones, tablets, notebooks e mais",
-    subcategories: [
-      { id: "smartphones", name: "Smartphones", icon: Smartphone, count: 45 },
-      { id: "notebooks", name: "Notebooks", icon: Zap, count: 32 },
-      { id: "tablets", name: "Tablets", icon: Zap, count: 28 },
-      { id: "fones", name: "Fones de Ouvido", icon: Zap, count: 34 },
-      { id: "cameras", name: "Câmeras", icon: Zap, count: 21 },
-      { id: "games", name: "Games", icon: Zap, count: 29 },
-    ],
-  },
-  {
-    id: "eletrodomesticos",
-    name: "Eletrodomésticos",
-    icon: Home,
-    count: 245,
-    description: "Geladeiras, fogões, micro-ondas e mais",
-    subcategories: [
-      { id: "geladeiras", name: "Geladeiras", icon: Home, count: 42 },
-      { id: "fogoes", name: "Fogões", icon: Home, count: 38 },
-      { id: "micro-ondas", name: "Micro-ondas", icon: Home, count: 35 },
-      { id: "maquinas-lavar", name: "Máquinas de Lavar", icon: Home, count: 41 },
-      { id: "aspiradores", name: "Aspiradores", icon: Home, count: 29 },
-      { id: "cafeteiras", name: "Cafeteiras", icon: Home, count: 25 },
-    ],
-  },
-  {
-    id: "televisao",
-    name: "Televisão",
-    icon: Tv,
-    count: 76,
-    description: "Smart TVs, TVs 4K, soundbars e acessórios",
-    subcategories: [
-      { id: "smart-tv", name: "Smart TVs", icon: Tv, count: 34 },
-      { id: "tv-4k", name: "TVs 4K", icon: Tv, count: 28 },
-      { id: "soundbars", name: "Soundbars", icon: Tv, count: 14 },
-    ],
-  },
-  {
-    id: "moveis",
-    name: "Móveis e Decoração",
-    icon: Sofa,
-    count: 65,
-    description: "Sofás, mesas, cadeiras e decoração",
-    subcategories: [
-      { id: "sofas", name: "Sofás", icon: Sofa, count: 18 },
-      { id: "mesas", name: "Mesas", icon: Sofa, count: 15 },
-      { id: "cadeiras", name: "Cadeiras", icon: Sofa, count: 12 },
-      { id: "decoracao", name: "Decoração", icon: Sofa, count: 20 },
-    ],
-  },
-  {
-    id: "moda",
-    name: "Moda e Acessórios",
-    icon: ShoppingBag,
-    count: 134,
-    description: "Roupas, calçados, bolsas e acessórios",
-    subcategories: [
-      { id: "roupas-femininas", name: "Roupas Femininas", icon: ShoppingBag, count: 45 },
-      { id: "roupas-masculinas", name: "Roupas Masculinas", icon: ShoppingBag, count: 38 },
-      { id: "calcados", name: "Calçados", icon: ShoppingBag, count: 32 },
-      { id: "bolsas", name: "Bolsas", icon: ShoppingBag, count: 19 },
-    ],
-  },
-  {
-    id: "beleza",
-    name: "Beleza e Cuidados",
-    icon: Star,
-    count: 92,
-    description: "Cosméticos, perfumes, cuidados pessoais",
-    subcategories: [
-      { id: "cosmeticos", name: "Cosméticos", icon: Star, count: 35 },
-      { id: "perfumes", name: "Perfumes", icon: Star, count: 28 },
-      { id: "cuidados-pele", name: "Cuidados com a Pele", icon: Star, count: 29 },
-    ],
-  },
-  {
-    id: "esportes",
-    name: "Esportes e Lazer",
-    icon: TrendingUp,
-    count: 78,
-    description: "Equipamentos esportivos, fitness e lazer",
-    subcategories: [
-      { id: "fitness", name: "Fitness", icon: TrendingUp, count: 32 },
-      { id: "futebol", name: "Futebol", icon: TrendingUp, count: 25 },
-      { id: "corrida", name: "Corrida", icon: TrendingUp, count: 21 },
-    ],
-  },
-  {
-    id: "brinquedos",
-    name: "Brinquedos",
-    icon: Gift,
-    count: 67,
-    description: "Brinquedos educativos, jogos e diversão",
-    subcategories: [
-      { id: "educativos", name: "Educativos", icon: Gift, count: 28 },
-      { id: "jogos", name: "Jogos", icon: Gift, count: 22 },
-      { id: "bonecas", name: "Bonecas", icon: Gift, count: 17 },
-    ],
-  },
-]
+
 
 interface CategoryBrowserProps {
+  categories: Category[]
   onCategorySelect: (categoryId: string) => void
   selectedCategory?: string
 }
 
-export function CategoryBrowser({ onCategorySelect, selectedCategory }: CategoryBrowserProps) {
+export function CategoryBrowser({ categories, onCategorySelect, selectedCategory }: CategoryBrowserProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid")
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null)
@@ -203,9 +98,8 @@ export function CategoryBrowser({ onCategorySelect, selectedCategory }: Category
           {filteredCategories.map((category) => (
             <Card
               key={category.id}
-              className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${
-                selectedCategory === category.id ? "ring-2 ring-[var(--color-pechinchou-red)]" : ""
-              }`}
+              className={`cursor-pointer hover:shadow-lg transition-all duration-200 ${selectedCategory === category.id ? "ring-2 ring-[var(--color-pechinchou-red)]" : ""
+                }`}
               onClick={() => onCategorySelect(category.id)}
             >
               <CardContent className="p-4">
@@ -246,9 +140,8 @@ export function CategoryBrowser({ onCategorySelect, selectedCategory }: Category
             <Card key={category.id} className="overflow-hidden">
               <CardContent className="p-0">
                 <div
-                  className={`flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 ${
-                    selectedCategory === category.id ? "bg-red-50 border-l-4 border-[var(--color-pechinchou-red)]" : ""
-                  }`}
+                  className={`flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 ${selectedCategory === category.id ? "bg-red-50 border-l-4 border-[var(--color-pechinchou-red)]" : ""
+                    }`}
                   onClick={() => onCategorySelect(category.id)}
                 >
                   <div className="flex items-center space-x-3">
@@ -271,9 +164,8 @@ export function CategoryBrowser({ onCategorySelect, selectedCategory }: Category
                         className="p-1"
                       >
                         <ChevronRight
-                          className={`h-4 w-4 transition-transform ${
-                            expandedCategory === category.id ? "rotate-90" : ""
-                          }`}
+                          className={`h-4 w-4 transition-transform ${expandedCategory === category.id ? "rotate-90" : ""
+                            }`}
                         />
                       </Button>
                     )}

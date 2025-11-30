@@ -6,40 +6,7 @@ import { QrCode, MessageCircle, ChevronRight, Heart } from "lucide-react"
 export function RightSidebar() {
   return (
     <aside className="hidden xl:flex w-80 flex-col space-y-4 p-4 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto bg-gray-50">
-      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-        <h3 className="text-gray-900 font-medium mb-3">Storys</h3>
-        <div className="flex gap-4">
-          <div className="flex flex-col items-center space-y-1">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-black to-red-900 flex items-center justify-center border-2 border-red-600 relative">
-              <span className="text-white font-bold text-sm">BLK25</span>
-              <Heart className="absolute -bottom-1 -right-1 w-4 h-4 text-red-600 fill-red-600" />
-            </div>
-            <span className="text-xs text-gray-700">BLK25</span>
-            <Heart className="w-3 h-3 text-red-600 fill-red-600" />
-          </div>
-          <div className="flex flex-col items-center space-y-1">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-red-600 to-red-800 flex items-center justify-center border-2 border-red-500">
-              <span className="text-white font-bold text-xl">P</span>
-            </div>
-            <span className="text-xs text-gray-700">Dicas</span>
-            <span className="text-red-600 text-xs">🎁</span>
-          </div>
-          <div className="flex flex-col items-center space-y-1">
-            <div className="w-16 h-16 rounded-full bg-yellow-500 flex items-center justify-center border-2 border-yellow-400">
-              <span className="text-white font-bold text-xl">🔔</span>
-            </div>
-            <span className="text-xs text-gray-700">Alertas</span>
-            <span className="text-yellow-500 text-xs">⚠️</span>
-          </div>
-          <div className="flex flex-col items-center space-y-1">
-            <div className="w-16 h-16 rounded-full bg-gradient-to-br from-green-600 to-green-800 flex items-center justify-center border-2 border-green-500">
-              <MessageCircle className="w-8 h-8 text-white" />
-            </div>
-            <span className="text-xs text-gray-700">Zap</span>
-            <span className="text-green-500 text-xs">💬</span>
-          </div>
-        </div>
-      </div>
+
 
       <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
         <div className="mb-3">
@@ -117,29 +84,7 @@ export function RightSidebar() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm text-center">
-        <div className="relative w-16 h-16 mx-auto mb-3">
-          <div className="absolute inset-0 bg-gradient-to-br from-red-500 via-purple-500 to-pink-500 rounded-full opacity-75 blur-sm"></div>
-          <div className="relative w-full h-full bg-gradient-to-br from-red-600 to-pink-600 rounded-full flex items-center justify-center">
-            <svg className="w-8 h-8 text-white" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M12 2L2 7v10c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-10-5z" />
-            </svg>
-          </div>
-        </div>
-        <h3 className="text-gray-900 font-medium mb-1">Pontue Promoções</h3>
-        <Button
-          variant="outline"
-          size="icon"
-          className="mx-auto bg-white border-gray-300 hover:bg-gray-50 rounded-full"
-        >
-          <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="7" height="7"></rect>
-            <rect x="14" y="3" width="7" height="7"></rect>
-            <rect x="14" y="14" width="7" height="7"></rect>
-            <rect x="3" y="14" width="7" height="7"></rect>
-          </svg>
-        </Button>
-      </div>
+
     </aside>
   )
 }
