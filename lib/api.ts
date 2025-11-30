@@ -34,7 +34,7 @@ export interface PaginatedResponse<T> {
     pagination: Pagination
 }
 
-const BASE_URL = "http://localhost:8000/public"
+const BASE_URL = "https://api.compreitodos.com/public"
 
 export async function fetchProducts(
     page = 1,
