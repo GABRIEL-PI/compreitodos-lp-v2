@@ -10,27 +10,11 @@ import { useState } from "react"
 // import { AuthModal } from "./auth-modal"
 import { CategoryMegaMenu } from "./category-mega-menu"
 import Link from "next/link"
-import { useRouter, useSearchParams } from "next/navigation"
+import { Suspense } from "react"
+import { SearchBar } from "./search-bar"
 
 export function Header() {
-  const router = useRouter()
-  const searchParams = useSearchParams()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const [searchQuery, setSearchQuery] = useState(searchParams.get("search") || "")
-
-  const handleSearch = () => {
-    if (searchQuery.trim()) {
-      router.push(`/?search=${encodeURIComponent(searchQuery)}`)
-    } else {
-      router.push("/")
-    }
-  }
-
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      handleSearch()
-    }
-  }
   // const [isAuthModalOpen, setIsAuthModalOpen] = useState(false)
   // const { user } = useAuth()
 
@@ -87,24 +71,9 @@ export function Header() {
 
             {/* Search Bar */}
             <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                <Input
-                  placeholder="Busque por lojas e promoções"
-                  className="pl-10 bg-white/10 border-white/20 text-white placeholder:text-gray-400 focus:bg-white/15 focus:border-white/30"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                />
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8 hover:bg-white/10"
-                  onClick={handleSearch}
-                >
-                  <Search className="h-4 w-4 text-white" />
-                </Button>
-              </div>
+              <Suspense fallback={<div className="h-10 bg-white/10 rounded-md animate-pulse" />}>
+                <SearchBar />
+              </Suspense>
             </div>
 
             {/* Right Side Actions */}

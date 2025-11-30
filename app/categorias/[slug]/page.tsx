@@ -1,6 +1,7 @@
 "use client"
 
 import { DealFeed } from "@/components/deal-feed"
+import { Suspense } from "react"
 import { RightSidebar } from "@/components/right-sidebar"
 import { useParams } from "next/navigation"
 
@@ -21,7 +22,9 @@ export default function CategoryPage() {
                                 As melhores ofertas de {slug.replace(/-/g, " ")}
                             </p>
                         </div>
-                        <DealFeed initialCategory={slug} />
+                        <Suspense fallback={<div className="flex justify-center py-12">Loading...</div>}>
+                            <DealFeed initialCategory={slug} />
+                        </Suspense>
                     </div>
                 </main>
                 <RightSidebar />
