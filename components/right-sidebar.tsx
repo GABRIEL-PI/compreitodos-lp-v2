@@ -1,29 +1,113 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { QrCode, MessageCircle, ChevronRight, Heart } from "lucide-react"
+import { QrCode, MessageCircle, ChevronRight, ChevronLeft, Heart } from "lucide-react"
+import { useEffect, useState, useRef } from "react"
+import { getRecentlyViewed } from "@/lib/recent-views"
+import type { Deal } from "@/lib/mock-data"
+import Link from "next/link"
 
 export function RightSidebar() {
+  const [recentDeals, setRecentDeals] = useState<Deal[]>([])
+
+  useEffect(() => {
+    // Initial load
+    setRecentDeals(getRecentlyViewed())
+
+    // Listen for updates
+    const handleUpdate = () => {
+      setRecentDeals(getRecentlyViewed())
+    }
+
+    window.addEventListener("recentlyViewedUpdated", handleUpdate)
+    return () => window.removeEventListener("recentlyViewedUpdated", handleUpdate)
+  }, [])
+
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(price)
+  }
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null)
+
+  const scrollRight = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: 200, behavior: "smooth" })
+    }
+  }
+
+  const scrollLeft = () => {
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollBy({ left: -200, behavior: "smooth" })
+    }
+  }
+
   return (
-    <aside className="hidden xl:flex w-80 flex-col space-y-4 p-4 h-[calc(100vh-4rem)] sticky top-16 overflow-y-auto bg-gray-50">
+    <aside className="flex flex-col space-y-4 sticky top-20">
 
 
-      <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-        <div className="mb-3">
-          <h3 className="text-gray-900 font-medium">Vistos recentes</h3>
-          <p className="text-xs text-gray-500">Suas últimas ofertas vistas</p>
+      <div className="bg-transparent">
+        <div className="mb-3 px-1">
+          <h3 className="text-gray-900 font-bold text-lg">Vistos recentes</h3>
+          <p className="text-xs text-gray-400">Suas últimas Pechinchas vistas</p>
         </div>
-        <div className="flex items-start gap-3">
-          <img src="/aperitivo-bitter-campari.jpg" alt="Kit de Cuecas" className="w-16 h-16 rounded object-cover" />
-          <div className="flex-1">
-            <p className="text-sm font-medium text-gray-900 line-clamp-2 mb-1">
-              Kit 10 Cuecas Sandrini Boxer Polo 100%...
-            </p>
-            <p className="text-xs text-gray-500 line-through">R$ 89,90</p>
-            <p className="text-lg font-bold text-red-600">R$ 59,99</p>
+
+        {recentDeals.length === 0 ? (
+          <p className="text-sm text-gray-500 italic px-1">Nenhum produto visto recentemente.</p>
+        ) : (
+          <div className="relative group">
+            <div
+              ref={scrollContainerRef}
+              className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide gap-3 pb-2"
+            >
+              {recentDeals.map((deal) => (
+                <Link
+                  href={`/deal/${deal.id}`}
+                  key={deal.id}
+                  className="min-w-[90%] snap-center flex items-center bg-white p-3 rounded-3xl shadow-sm border border-gray-100 transition-all hover:shadow-md"
+                >
+                  <div className="w-20 h-20 flex-shrink-0 bg-white rounded-xl overflow-hidden flex items-center justify-center">
+                    <img
+                      src={deal.image || "/placeholder.svg"}
+                      alt={deal.title}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <div className="flex-1 ml-3 min-w-0">
+                    <p className="text-sm font-bold text-[#0F1111] line-clamp-2 leading-tight mb-1">
+                      {deal.title}
+                    </p>
+                    <div className="flex flex-col">
+                      {deal.originalPrice > deal.currentPrice && (
+                        <p className="text-xs text-gray-400 line-through">{formatPrice(deal.originalPrice)}</p>
+                      )}
+                      <p className="text-xl font-bold text-[#0F1111]">{formatPrice(deal.currentPrice)}</p>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+
+            {recentDeals.length > 1 && (
+              <>
+                <button
+                  onClick={scrollLeft}
+                  className="absolute -left-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-gray-50 border border-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-0"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={scrollRight}
+                  className="absolute -right-3 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center text-gray-700 hover:bg-gray-50 border border-gray-100 z-10 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
           </div>
-          <ChevronRight className="w-4 h-4 text-gray-400 flex-shrink-0 mt-1" />
-        </div>
+        )}
       </div>
 
       <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
@@ -38,9 +122,7 @@ export function RightSidebar() {
             </div>
             <span className="flex-1">Escaneie o QR Code</span>
             <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
-              <svg className="w-4 h-4 text-gray-700" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M3 11h8V3H3v8zm2-6h4v4H5V5zm8-2v8h8V3h-8zm6 6h-4V5h4v4zM3 21h8v-8H3v8zm2-6h4v4H5v-4zm13-2h-2v2h2v-2zm-2 2h-2v2h2v-2zm2 2h-2v2h2v-2zm0-6h-2v2h2V9zm2 4h2v-2h-2v2zm0-4h2V7h-2v2zm-4-4h2V3h-2v2zm4 10h-2v2h2v-2zm-2 2h-2v2h2v-2z" />
-              </svg>
+              <MessageCircle className="w-4 h-4 text-gray-700" />
             </div>
           </div>
           <div className="flex items-center gap-3 text-sm text-gray-700">
@@ -51,12 +133,11 @@ export function RightSidebar() {
             <Heart className="w-4 h-4 text-green-500 fill-green-500" />
           </div>
         </div>
-        <div className="w-32 h-32 mx-auto bg-white rounded-lg p-2 mb-4 flex items-center justify-center border border-gray-200">
-          <div className="w-full h-full border-2 border-gray-300 rounded flex items-center justify-center">
-            <QrCode className="h-16 w-16 text-gray-800" />
-          </div>
-        </div>
-        <Button className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full">
+        {/* QR Code removed as requested */}
+        <Button
+          className="w-full bg-green-600 hover:bg-green-700 text-white rounded-full"
+          onClick={() => window.open("https://chat.whatsapp.com/CLc8JVvk7KT838cWRQHeJF", "_blank")}
+        >
           <MessageCircle className="h-4 w-4 mr-2" />
           Entrar agora
         </Button>

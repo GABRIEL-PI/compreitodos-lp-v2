@@ -9,6 +9,8 @@ export interface Product {
     affiliate_url: string
     category: string
     created_at: string
+    coupon?: string
+    real_images?: string[]
 }
 
 export interface Category {
@@ -34,7 +36,8 @@ export interface PaginatedResponse<T> {
     pagination: Pagination
 }
 
-const BASE_URL = "https://api.compreitodos.com/public"
+// const BASE_URL = "https://api.compreitodos.com/public"
+const BASE_URL = "http://localhost:8000/public"
 
 export async function fetchProducts(
     page = 1,

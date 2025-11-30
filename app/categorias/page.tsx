@@ -55,9 +55,8 @@ export default function CategoriasPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="flex">
-        {/* Sidebar removed as requested */}
-        <main className="flex-1 p-4">
+      <div className="container mx-auto flex gap-6 p-4">
+        <main className="flex-1 min-w-0">
           <div className="max-w-6xl mx-auto">
             {loading ? (
               <div className="flex justify-center py-12">
@@ -71,7 +70,9 @@ export default function CategoriasPage() {
             )}
           </div>
         </main>
-        <RightSidebar />
+        <div className="hidden xl:block w-80 shrink-0">
+          <RightSidebar />
+        </div>
       </div>
     </div>
   )

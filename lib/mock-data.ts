@@ -22,6 +22,8 @@ export interface Deal {
   }
   postedAt: string
   link: string
+  coupon?: string
+  realImages?: string[]
 }
 
 export const mockDeals: Deal[] = [

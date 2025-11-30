@@ -7,6 +7,7 @@ import { Suspense } from "react"
 import { AuthProvider } from "@/lib/auth-context"
 import { GamificationProvider } from "@/components/gamification/gamification-provider"
 import { Header } from "@/components/header"
+import { WhatsAppGroupsWidget } from "@/components/whatsapp-groups-widget"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -28,6 +29,7 @@ export default function RootLayout({
           <GamificationProvider>
             <Header />
             <Suspense fallback={null}>{children}</Suspense>
+            <WhatsAppGroupsWidget />
           </GamificationProvider>
         </AuthProvider>
         <Analytics />
